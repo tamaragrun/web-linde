@@ -1883,40 +1883,41 @@
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        // Verificar que el ID de Formspree fue configurado
-        if (form.action.includes("YOUR_FORM_ID")) {
-          formMessage.className = "form-message error";
-          formMessage.textContent =
-            "Por favor configure el ID de Formspree en el código HTML para activar el formulario.";
-          return;
-        }
-
         submitBtn.classList.add("loading");
         submitBtn.innerHTML =
           '<i class="fas fa-spinner fa-spin"></i> Enviando...';
         formMessage.className = "form-message";
         formMessage.textContent = "";
+        formMessage.style.display = "none";
 
         try {
-          const data = new FormData(form);
           const response = await fetch(form.action, {
             method: "POST",
-            body: data,
+            body: new FormData(form),
             headers: { Accept: "application/json" },
           });
+
+          const json = await response.json();
 
           if (response.ok) {
             formMessage.className = "form-message success";
             formMessage.textContent =
               "¡Consulta enviada con éxito! Le responderemos a la brevedad.";
+            formMessage.style.display = "block";
             form.reset();
           } else {
-            throw new Error("Error en el servidor");
+            const errMsg =
+              json?.errors?.map((e) => e.message).join(", ") ||
+              "Error al enviar. Por favor contáctenos por WhatsApp.";
+            formMessage.className = "form-message error";
+            formMessage.textContent = errMsg;
+            formMessage.style.display = "block";
           }
         } catch {
           formMessage.className = "form-message error";
           formMessage.textContent =
-            "Hubo un error al enviar. Por favor contáctenos por WhatsApp.";
+            "No se pudo conectar. Verifique su conexión o contáctenos por WhatsApp.";
+          formMessage.style.display = "block";
         } finally {
           submitBtn.classList.remove("loading");
           submitBtn.innerHTML =
